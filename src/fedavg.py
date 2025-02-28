@@ -57,7 +57,7 @@ if __name__ == "__main__":
     mal_users = [7]
 
     mal_X_list, mal_Y, Y_true = get_mal_dataset(
-        test_dataset, args.num_mal_samples, args.num_classes
+        test_dataset, args.num_mal_samples, args.num_classes, args.label_tampering
     )
     print(
         "malcious dataset true labels: {}, malicious labels: {}".format(Y_true, mal_Y)

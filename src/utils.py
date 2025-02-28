@@ -19,7 +19,7 @@ from sampling import (
 )
 
 
-def get_mal_dataset(dataset, num_mal, num_classes):
+def get_mal_dataset(dataset, num_mal, num_classes, label_tampering):
     X_list = np.random.choice(len(dataset), num_mal)
     print(X_list)
     Y_true = []
@@ -27,10 +27,14 @@ def get_mal_dataset(dataset, num_mal, num_classes):
         _, Y = dataset[i]
         Y_true.append(Y)
     Y_mal = []
-    # for i in range(num_mal):
-    #     allowed_targets = list(range(num_classes))
-    #     allowed_targets.remove(Y_true[i])
-    #     Y_mal.append(np.random.choice(allowed_targets))
+
+    if label_tampering == "zero":
+        Y_mal = [0 for _ in range(num_mal)]
+    elif label_tampering == "random":
+        Y_mal = [random.randint(0, num_classes - 1) for _ in range(num_mal)]
+    elif label_tampering == "reverse":
+        Y_mal = [num_classes - 1 - y for y in Y_true]
+
     return X_list, Y_mal, Y_true
 
 
