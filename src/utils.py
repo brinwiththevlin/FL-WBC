@@ -34,6 +34,8 @@ def get_mal_dataset(dataset, num_mal, num_classes, label_tampering):
         Y_mal = [random.randint(0, num_classes - 1) for _ in range(num_mal)]
     elif label_tampering == "reverse":
         Y_mal = [num_classes - 1 - y for y in Y_true]
+    elif label_tampering == "none":
+        Y_mal = Y_true
 
     return X_list, Y_mal, Y_true
 
@@ -43,9 +45,10 @@ def get_dataset(args):
     the keys are the user index and the values are the corresponding data for
     each of those users.
     """
+
     def unbalanced_classes(test_val_index, targets):
         # targets = [targets[i] for i in test_val_index]
-        under_represented_classes = random.sample(range(10),3) 
+        under_represented_classes = random.sample(range(10), 3)
         class_limit = 500
         class_dist = [0 for _ in range(10)]
         new_test_val_index = []
@@ -73,6 +76,7 @@ def get_dataset(args):
         dataset_subset.targets = subset_targets
 
         return dataset_subset
+
     if args.dataset == "cifar":
         data_dir = "../data/cifar/"
         apply_transform = transforms.Compose(

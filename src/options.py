@@ -10,7 +10,7 @@ def args_parser():
 
     # federated arguments (Notation for the arguments followed from paper)
     parser.add_argument(
-        "--epochs", type=int, default=10, help="number of rounds of training"
+        "--epochs", type=int, default=100, help="number of rounds of training"
     )
     parser.add_argument("--num_users", type=int, default=100, help="number of users: K")
     parser.add_argument(
@@ -103,8 +103,20 @@ def args_parser():
         "--h_reg", type=float, default=0.01, help="Hessian regularization"
     )
     parser.add_argument("--l1_reg", type=float, default=0.01, help="L1 regularization")
-    parser.add_argument("--label_tampering", type=str, choices=["None", "random", "reverse", "zero"], default="None", help="label tampering")
-    parser.add_argument("--weight_tampering", type=str, choices=["None", "random", "reverse", "large_neg"], default="None", help="weight tampering")
+    parser.add_argument(
+        "--label_tampering",
+        type=str,
+        choices=["none", "random", "reverse", "zero"],
+        default="none",
+        help="label tampering",
+    )
+    parser.add_argument(
+        "--weight_tampering",
+        type=str,
+        choices=["none", "random", "reverse", "large_neg"],
+        default="none",
+        help="weight tampering",
+    )
 
     # defence arguments
     parser.add_argument(
@@ -159,4 +171,5 @@ def args_parser():
     parser.add_argument("--verbose", type=int, default=1, help="verbose")
     parser.add_argument("--seed", type=int, default=1, help="random seed")
     args = parser.parse_args()
+    args.results_file = f"{args.dataset}_{args.model}_{args.defense}_{args.iid}_lt{args.label_tampering}_wt{args.weight_tampering}/results.csv"
     return args

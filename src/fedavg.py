@@ -1,5 +1,6 @@
 import os
 import copy
+import random
 import time
 import pickle
 import numpy as np
@@ -17,6 +18,7 @@ from models import (
 
 )
 from utils import get_dataset, exp_details, average_weights_ns, get_mal_dataset
+import csv
 
 if __name__ == "__main__":
     np.random.seed(12345)
@@ -54,7 +56,7 @@ if __name__ == "__main__":
     global_weights = global_model.state_dict()
 
     # malicious users
-    mal_users = [7]
+    mal_users = random.sample(range(args.num_users), args.num_users // 10)
 
     mal_X_list, mal_Y, Y_true = get_mal_dataset(
         test_dataset, args.num_mal_samples, args.num_classes, args.label_tampering
@@ -144,10 +146,8 @@ if __name__ == "__main__":
         if (epoch + 1) % print_every == 0:
             print(f" \nAvg Training Stats after {epoch+1} global rounds:")
             print(f"Training Loss : {np.mean(np.array(train_loss))}")
-            test_acc, test_loss = test_inference(args, global_model, test_dataset)
-            print(
-                "Global model Benign Test Accuracy: {:.2f}% \n".format(100 * test_acc)
-            )
+            test_acc, test_loss, precision, recall, f1 = test_inference(args, global_model, test_dataset)
+            print("Global model Benign Test Accuracy: {:.2f}% \n".format(100 * test_acc))
             mal_acc, mal_loss, mal_out = mal_inference(
                 args, global_model, test_dataset, mal_X_list, mal_Y
             )
@@ -157,8 +157,26 @@ if __name__ == "__main__":
                 )
             )
 
+            # Log to CSV
+            os.makedirs(args.results_file[: args.results_file.rfind("/")], exist_ok=True)
+            with open(args.results_file, "a", newline="") as csvfile:
+                writer = csv.writer(csvfile)
+                # Write header once if file is new
+                if epoch == 0:
+                    writer.writerow(["epoch", "train_loss", "test_acc", "precision", "recall", "f1", "mal_acc", "mal_loss"])
+                writer.writerow([
+                    epoch + 1,
+                    np.mean(train_loss),
+                    test_acc,
+                    precision,
+                    recall,
+                    f1,
+                    mal_acc,
+                    mal_loss
+                ])
+
     # Test inference after completion of training
-    test_acc, test_loss = test_inference(args, global_model, test_dataset)
+    test_acc, test_loss, _, _, _ = test_inference(args, global_model, test_dataset)
 
     print(f" \n Results after {args.epochs} global rounds of training:")
     print("|---- Test Accuracy: {:.2f}%".format(100 * test_acc))
@@ -174,6 +192,7 @@ if __name__ == "__main__":
         args.local_bs,
     )
 
+    os.makedirs(os.path.dirname(file_name), exist_ok=True)
     with open(file_name, "wb") as f:
         pickle.dump([train_loss, train_accuracy], f)
 

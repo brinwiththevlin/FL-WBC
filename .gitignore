@@ -4,3 +4,4 @@ data/
 .vscode/
 .pytest_cache/
 venv/
+results/

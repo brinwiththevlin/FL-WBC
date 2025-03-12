@@ -8,13 +8,18 @@ import torch.nn.functional as F
 from collections import OrderedDict
 import copy
 
+
 def tamper_weights_large_negative(model) -> None:
-    tampered_state = {k: torch.ones_like(v) * -10 for k, v in model.state_dict().items()}
+    tampered_state = {
+        k: torch.ones_like(v) * -10 for k, v in model.state_dict().items()
+    }
     model.load_state_dict(tampered_state)
+
 
 def tamper_weights_reverse(model) -> None:
     tampered_state = {k: torch.ones_like(v) * -1 for k, v in model.state_dict().items()}
     model.load_state_dict(tampered_state)
+
 
 def tamper_weights_random(model) -> None:
     tampered_state = {k: torch.rand_like(v) for k, v in model.state_dict().items()}
@@ -31,7 +36,7 @@ class MLP(nn.Module):
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x):
-        x = x.view(-1, x.shape[1]*x.shape[-2]*x.shape[-1])
+        x = x.view(-1, x.shape[1] * x.shape[-2] * x.shape[-1])
         x = self.layer_input(x)
         x = self.dropout(x)
         x = self.relu(x)
@@ -51,34 +56,34 @@ class CNNMnist(nn.Module):
         self.feature_fc2 = None
 
     def forward(self, x):
-        #print(x.shape)
+        # print(x.shape)
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
         x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
-        x = x.view(-1, x.shape[1]*x.shape[2]*x.shape[3])
+        x = x.view(-1, x.shape[1] * x.shape[2] * x.shape[3])
         self.feature_fc1 = x.cpu().detach().numpy()
         x = F.relu(self.fc1(x))
-        #x = F.dropout(x, training=self.training)
+        # x = F.dropout(x, training=self.training)
         self.feature_fc2 = x.cpu().detach().numpy()
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
 
-        
-        
 
 class CNNFashion_Mnist(nn.Module):
     def __init__(self, args):
         super(CNNFashion_Mnist, self).__init__()
         self.layer1 = nn.Sequential(
             nn.Conv2d(1, 16, kernel_size=5, padding=2),
-            #nn.BatchNorm2d(16),
+            # nn.BatchNorm2d(16),
             nn.ReLU(),
-            nn.MaxPool2d(2))
+            nn.MaxPool2d(2),
+        )
         self.layer2 = nn.Sequential(
             nn.Conv2d(16, 32, kernel_size=5, padding=2),
-            #nn.BatchNorm2d(32),
+            # nn.BatchNorm2d(32),
             nn.ReLU(),
-            nn.MaxPool2d(2))
-        self.fc = nn.Linear(7*7*32, 10)
+            nn.MaxPool2d(2),
+        )
+        self.fc = nn.Linear(7 * 7 * 32, 10)
 
     def forward(self, x):
         out = self.layer1(x)
@@ -87,61 +92,60 @@ class CNNFashion_Mnist(nn.Module):
         out = self.fc(out)
         return F.log_softmax(out, dim=1)
 
+
 class CNNFeMnist_sim(nn.Module):
     def __init__(self, args):
         super(CNNFeMnist_sim, self).__init__()
         self.layer1 = nn.Sequential(
-            nn.Conv2d(1, 10, kernel_size=5, padding=2),
-            nn.ReLU(),
-            nn.MaxPool2d(2))
+            nn.Conv2d(1, 10, kernel_size=5, padding=2), nn.ReLU(), nn.MaxPool2d(2)
+        )
         self.layer2 = nn.Sequential(
-            nn.Conv2d(10, 20, kernel_size=5, padding=2),
-            nn.ReLU(),
-            nn.MaxPool2d(2))
-        self.fc1 = nn.Linear(7*7*20, 512)
+            nn.Conv2d(10, 20, kernel_size=5, padding=2), nn.ReLU(), nn.MaxPool2d(2)
+        )
+        self.fc1 = nn.Linear(7 * 7 * 20, 512)
         self.fc2 = nn.Linear(512, 62)
 
     def forward(self, x):
-        #print(x.shape)
+        # print(x.shape)
         out = self.layer1(x)
-        #print(out.shape)
+        # print(out.shape)
         out = self.layer2(out)
-        #print(out.shape)
+        # print(out.shape)
         out = out.view(out.size(0), -1)
-        #print(out.shape)
+        # print(out.shape)
         out = self.fc1(out)
-        #print(out.shape)
+        # print(out.shape)
         out = self.fc2(out)
-        #print(out.shape)
+        # print(out.shape)
         return F.log_softmax(out, dim=1)
+
 
 class CNNFeMnist(nn.Module):
     def __init__(self, args):
         super(CNNFeMnist, self).__init__()
         self.layer1 = nn.Sequential(
-            nn.Conv2d(1, 32, kernel_size=5, padding=2),
-            nn.ReLU(),
-            nn.MaxPool2d(2))
+            nn.Conv2d(1, 32, kernel_size=5, padding=2), nn.ReLU(), nn.MaxPool2d(2)
+        )
         self.layer2 = nn.Sequential(
-            nn.Conv2d(32, 64, kernel_size=5, padding=2),
-            nn.ReLU(),
-            nn.MaxPool2d(2))
-        self.fc1 = nn.Linear(7*7*64, 2048)
+            nn.Conv2d(32, 64, kernel_size=5, padding=2), nn.ReLU(), nn.MaxPool2d(2)
+        )
+        self.fc1 = nn.Linear(7 * 7 * 64, 2048)
         self.fc2 = nn.Linear(2048, 62)
 
     def forward(self, x):
-        #print(x.shape)
+        # print(x.shape)
         out = self.layer1(x)
-        #print(out.shape)
+        # print(out.shape)
         out = self.layer2(out)
-        #print(out.shape)
+        # print(out.shape)
         out = out.view(out.size(0), -1)
-        #print(out.shape)
+        # print(out.shape)
         out = self.fc1(out)
-        #print(out.shape)
+        # print(out.shape)
         out = self.fc2(out)
-        #print(out.shape)
+        # print(out.shape)
         return F.log_softmax(out, dim=1)
+
 
 class CNNCifar(nn.Module):
     def __init__(self, args):
@@ -155,24 +159,25 @@ class CNNCifar(nn.Module):
         self.feature_fc1 = None
         self.feature_fc2 = None
         self.feature_fc3 = None
-        #self.feature_fc1_graph = None
-        #self.feature_fc2_graph = None
-        #self.feature_fc3_graph = None
+        # self.feature_fc1_graph = None
+        # self.feature_fc2_graph = None
+        # self.feature_fc3_graph = None
 
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
         x = x.view(x.size(0), -1)
-        #self.feature_fc1_graph = x
+        # self.feature_fc1_graph = x
         self.feature_fc1 = x.cpu().detach().numpy()
         x = F.relu(self.fc1(x))
-        #self.feature_fc2_graph = x
+        # self.feature_fc2_graph = x
         self.feature_fc2 = x.cpu().detach().numpy()
         x = F.relu(self.fc2(x))
-        #self.feature_fc3_graph = x
+        # self.feature_fc3_graph = x
         self.feature_fc3 = x.cpu().detach().numpy()
         x = self.fc3(x)
         return F.log_softmax(x, dim=1)
+
 
 class CNNORL(nn.Module):
     def __init__(self):
@@ -207,19 +212,18 @@ class CNNMiniImagenet(nn.Module):
         super(CNNMiniImagenet, self).__init__()
         self.conv1 = nn.Conv2d(3, 10, 3)
         self.pool = nn.MaxPool2d(2, 2)
-        #self.conv2 = nn.Conv2d(16, 16, 3)
+        # self.conv2 = nn.Conv2d(16, 16, 3)
         self.conv3 = nn.Conv2d(10, 20, 3)
-        #self.conv4 = nn.Conv2d(32, 32, 3)
-        #self.fc1 = nn.Linear(10368, 4096)
+        # self.conv4 = nn.Conv2d(32, 32, 3)
+        # self.fc1 = nn.Linear(10368, 4096)
         self.fc1 = nn.Linear(7220, 4096)
         self.fc2 = nn.Linear(4096, 1024)
         self.fc3 = nn.Linear(1024, 100)
-        
 
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv3(x)))
-        #print(x.shape)
+        # print(x.shape)
         x = x.view(x.size(0), -1)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
@@ -232,28 +236,28 @@ class LeNet(nn.Module):
         super(LeNet, self).__init__()
         act = nn.ReLU
         self.body = nn.Sequential(
-            nn.Conv2d(channel, 12, kernel_size=5, padding=5//2, stride=2),
+            nn.Conv2d(channel, 12, kernel_size=5, padding=5 // 2, stride=2),
             act(),
-            nn.Conv2d(12, 12, kernel_size=5, padding=5//2, stride=2),
+            nn.Conv2d(12, 12, kernel_size=5, padding=5 // 2, stride=2),
             act(),
-            nn.Conv2d(12, 12, kernel_size=5, padding=5//2, stride=1),
+            nn.Conv2d(12, 12, kernel_size=5, padding=5 // 2, stride=1),
             act(),
-            nn.Conv2d(12, 12, kernel_size=5, padding=5//2, stride=1),
+            nn.Conv2d(12, 12, kernel_size=5, padding=5 // 2, stride=1),
             act(),
         )
         if channel == 1:
             self.fc = nn.Sequential(
                 nn.Linear(588, 10),
-                #act(),
-                #nn.Linear(256, 100)
+                # act(),
+                # nn.Linear(256, 100)
             )
         else:
             self.fc = nn.Sequential(
                 nn.Linear(768, 10),
-                #act(),
-                #nn.Linear(256, 100)
+                # act(),
+                # nn.Linear(256, 100)
             )
-        
+
     def forward(self, x):
         out = self.body(x)
         feature = out.view(out.size(0), -1)
@@ -261,62 +265,87 @@ class LeNet(nn.Module):
         out = self.fc(feature)
         return F.log_softmax(out, dim=1)
 
+
 class ConvNet(torch.nn.Module):
     """ConvNetBN."""
 
     def __init__(self, width=32, num_classes=10, num_channels=3):
         """Init with width and num classes."""
         super().__init__()
-        self.model = torch.nn.Sequential(OrderedDict([
-            ('conv0', torch.nn.Conv2d(num_channels, 1 * width, kernel_size=3, padding=1)),
-            ('bn0', torch.nn.BatchNorm2d(1 * width)),
-            ('relu0', torch.nn.ReLU()),
-
-            ('conv1', torch.nn.Conv2d(1 * width, 2 * width, kernel_size=3, padding=1)),
-            ('bn1', torch.nn.BatchNorm2d(2 * width)),
-            ('relu1', torch.nn.ReLU()),
-
-            ('conv2', torch.nn.Conv2d(2 * width, 2 * width, kernel_size=3, padding=1)),
-            ('bn2', torch.nn.BatchNorm2d(2 * width)),
-            ('relu2', torch.nn.ReLU()),
-
-            ('conv3', torch.nn.Conv2d(2 * width, 4 * width, kernel_size=3, padding=1)),
-            ('bn3', torch.nn.BatchNorm2d(4 * width)),
-            ('relu3', torch.nn.ReLU()),
-
-            ('conv4', torch.nn.Conv2d(4 * width, 4 * width, kernel_size=3, padding=1)),
-            ('bn4', torch.nn.BatchNorm2d(4 * width)),
-            ('relu4', torch.nn.ReLU()),
-
-            ('conv5', torch.nn.Conv2d(4 * width, 4 * width, kernel_size=3, padding=1)),
-            ('bn5', torch.nn.BatchNorm2d(4 * width)),
-            ('relu5', torch.nn.ReLU()),
-
-            ('pool0', torch.nn.MaxPool2d(3)),
-
-            ('conv6', torch.nn.Conv2d(4 * width, 4 * width, kernel_size=3, padding=1)),
-            ('bn6', torch.nn.BatchNorm2d(4 * width)),
-            ('relu6', torch.nn.ReLU()),
-
-            ('conv6', torch.nn.Conv2d(4 * width, 4 * width, kernel_size=3, padding=1)),
-            ('bn6', torch.nn.BatchNorm2d(4 * width)),
-            ('relu6', torch.nn.ReLU()),
-            
-            ('conv7', torch.nn.Conv2d(4 * width, 4 * width, kernel_size=3, padding=1)),
-            ('bn7', torch.nn.BatchNorm2d(4 * width)),
-            ('relu7', torch.nn.ReLU()),
-
-            ('pool1', torch.nn.MaxPool2d(3)),
-            ('flatten', torch.nn.Flatten())
-            #('linear', torch.nn.Linear(36 * width, num_classes))
-        ]))
+        self.model = torch.nn.Sequential(
+            OrderedDict(
+                [
+                    (
+                        "conv0",
+                        torch.nn.Conv2d(
+                            num_channels, 1 * width, kernel_size=3, padding=1
+                        ),
+                    ),
+                    ("bn0", torch.nn.BatchNorm2d(1 * width)),
+                    ("relu0", torch.nn.ReLU()),
+                    (
+                        "conv1",
+                        torch.nn.Conv2d(1 * width, 2 * width, kernel_size=3, padding=1),
+                    ),
+                    ("bn1", torch.nn.BatchNorm2d(2 * width)),
+                    ("relu1", torch.nn.ReLU()),
+                    (
+                        "conv2",
+                        torch.nn.Conv2d(2 * width, 2 * width, kernel_size=3, padding=1),
+                    ),
+                    ("bn2", torch.nn.BatchNorm2d(2 * width)),
+                    ("relu2", torch.nn.ReLU()),
+                    (
+                        "conv3",
+                        torch.nn.Conv2d(2 * width, 4 * width, kernel_size=3, padding=1),
+                    ),
+                    ("bn3", torch.nn.BatchNorm2d(4 * width)),
+                    ("relu3", torch.nn.ReLU()),
+                    (
+                        "conv4",
+                        torch.nn.Conv2d(4 * width, 4 * width, kernel_size=3, padding=1),
+                    ),
+                    ("bn4", torch.nn.BatchNorm2d(4 * width)),
+                    ("relu4", torch.nn.ReLU()),
+                    (
+                        "conv5",
+                        torch.nn.Conv2d(4 * width, 4 * width, kernel_size=3, padding=1),
+                    ),
+                    ("bn5", torch.nn.BatchNorm2d(4 * width)),
+                    ("relu5", torch.nn.ReLU()),
+                    ("pool0", torch.nn.MaxPool2d(3)),
+                    (
+                        "conv6",
+                        torch.nn.Conv2d(4 * width, 4 * width, kernel_size=3, padding=1),
+                    ),
+                    ("bn6", torch.nn.BatchNorm2d(4 * width)),
+                    ("relu6", torch.nn.ReLU()),
+                    (
+                        "conv6",
+                        torch.nn.Conv2d(4 * width, 4 * width, kernel_size=3, padding=1),
+                    ),
+                    ("bn6", torch.nn.BatchNorm2d(4 * width)),
+                    ("relu6", torch.nn.ReLU()),
+                    (
+                        "conv7",
+                        torch.nn.Conv2d(4 * width, 4 * width, kernel_size=3, padding=1),
+                    ),
+                    ("bn7", torch.nn.BatchNorm2d(4 * width)),
+                    ("relu7", torch.nn.ReLU()),
+                    ("pool1", torch.nn.MaxPool2d(3)),
+                    ("flatten", torch.nn.Flatten()),
+                    # ('linear', torch.nn.Linear(36 * width, num_classes))
+                ]
+            )
+        )
         self.linear = torch.nn.Linear(36 * width, num_classes)
-        #self.feature = None
+        # self.feature = None
 
     def forward(self, input):
         feature = self.model(input)
         out = self.linear(feature)
         return F.log_softmax(out, dim=1)
+
 
 # class modelC(nn.Module):
 #     def __init__(self, input_size, n_classes=10, **kwargs):
@@ -324,7 +353,7 @@ class ConvNet(torch.nn.Module):
 #         self.conv1 = nn.Conv2d(input_size, 96, 3, padding=1)
 #         self.conv2 = nn.Conv2d(96, 96, 3, padding=1)
 #         self.conv3 = nn.Conv2d(96, 96, 3, padding=1, stride=2)
-#         self.conv4 = nn.Conv2d(96, 192, 3, padding=1) 
+#         self.conv4 = nn.Conv2d(96, 192, 3, padding=1)
 #         self.conv5 = nn.Conv2d(192, 192, 3, padding=1)
 #         self.conv6 = nn.Conv2d(192, 192, 3, padding=1, stride=2)
 #         self.conv7 = nn.Conv2d(192, 192, 3, padding=1)

@@ -8,7 +8,12 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset
-from models import tamper_weights_large_negative, tamper_weights_reverse, tamper_weights_random
+from models import (
+    tamper_weights_large_negative,
+    tamper_weights_reverse,
+    tamper_weights_random,
+)
+from sklearn.metrics import precision_recall_fscore_support
 
 
 class DatasetSplit(Dataset):
@@ -288,14 +293,16 @@ class LocalUpdate(object):
 
 
 def test_inference(args, model, test_dataset):
-    """Returns the test accuracy and loss."""
-
+    """Returns the test accuracy, loss, precision, recall, and F1."""
     model.eval()
     loss, total, correct = 0.0, 0.0, 0.0
 
     device = "cuda" if args.gpu else "cpu"
     criterion = nn.NLLLoss().to(device)
     testloader = DataLoader(test_dataset, batch_size=128, shuffle=False)
+
+    all_preds = []
+    all_labels = []
 
     for batch_idx, (images, labels) in enumerate(testloader):
         images, labels = images.to(device), labels.to(device)
@@ -311,8 +318,21 @@ def test_inference(args, model, test_dataset):
         correct += torch.sum(torch.eq(pred_labels, labels)).item()
         total += len(labels)
 
+        # Collect predictions and labels for precision/recall/f1
+        all_preds.append(pred_labels.cpu().numpy())
+        all_labels.append(labels.cpu().numpy())
+
     accuracy = correct / total
-    return accuracy, loss
+
+    # Flatten predictions and labels for metrics
+    all_preds = np.concatenate(all_preds)
+    all_labels = np.concatenate(all_labels)
+
+    precision, recall, f1, _ = precision_recall_fscore_support(
+        all_labels, all_preds, average="macro"
+    )
+
+    return accuracy, loss, precision, recall, f1
 
 
 def mal_inference(args, model, test_dataset, mal_X_list, mal_Y):
